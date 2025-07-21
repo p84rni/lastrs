@@ -3,7 +3,7 @@ use tokio::time::sleep;
 
 
 use std::fs::File;
-use std::{time::Duration, io::{self, Write, BufRead, BufReader}};
+use std::{time::Duration, io::{self, BufRead, BufReader}};
 
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
@@ -24,6 +24,11 @@ static MAX_LENGTH: usize = 55;
 static ERASE_LENGTH: i32 = 18;
 
 //----------------word art stuff starts here------------------------
+//draw delay in milliseconds
+static DRAW_DELAY: u64 = 10;
+//update time in seconds
+static UPDATE_PERIOD: u64 = 10;
+
 static TITLE_PATH: &str = "art.txt";
 static TITLE_WIDTH: usize = 56;
 //window width can't go lower than title width, duh
@@ -60,13 +65,13 @@ fn read_title() -> io::Result<()> {
 }
 
 fn process_row(mut string: String) -> String {
-    if string.len() > MAX_LENGTH {
+    if string.chars().count() > MAX_LENGTH {
         let (first, _last) = string.split_at_mut(MAX_LENGTH);
         let string2: String=first.to_string(); 
         return format!("{}{} {}",VERT_LINE1,string2,VERT_LINE1);
     }
     else {
-        for _i in string.len()..MAX_LENGTH {
+        for _i in string.chars().count()..MAX_LENGTH {
             string.push(' ');
         }
         return format!("{}{} {}",VERT_LINE1,string,VERT_LINE1);
@@ -74,12 +79,11 @@ fn process_row(mut string: String) -> String {
     
 }
 
-fn offset_output(mut string: String) -> String {
+fn offset_output(string: String) -> String {
     let mut offset = String::new();
     let center = WINDOW_WIDTH/2 - (MAX_LENGTH+1)/2;
     for _i in 0.. center{
         offset.push(' ');
-
     }
     return format!("{}{}",offset,string);
 }
@@ -116,9 +120,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         //now playing top half
         println!("{}",offset_output(format!("{}{}{}",CORNER1,header1,CORNER2)));
 
-        sleep(Duration::from_millis(10)).await;
-       
-        let mut string = String::new();
+        sleep(Duration::from_millis(DRAW_DELAY)).await;
+    
+        let string: String;
         match client.now_playing().await {
             
             Ok(Some(track)) => {
@@ -134,11 +138,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         println!("{}", offset_output(process_row(string)));
         println!("{}", offset_output(format!("{}{}{}",CORNER4,header1,CORNER3)));
-        sleep(Duration::from_millis(10)).await;
+        sleep(Duration::from_millis(DRAW_DELAY)).await;
 
         
         println!("");
-        sleep(Duration::from_millis(10)).await;
+        sleep(Duration::from_millis(DRAW_DELAY)).await;
 
         let mut header3: String = String::new();
         for _n in 0..MAX_LENGTH+1{
@@ -151,7 +155,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         //recents top
         println!("{}",offset_output(format!("{}{}{}",CORNER1,header2,CORNER2)));
-        sleep(Duration::from_millis(10)).await;
+        sleep(Duration::from_millis(DRAW_DELAY)).await;
 
         let tracks = client.clone().all_tracks().await?;
         let mut index = 0;
@@ -172,8 +176,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        sleep(Duration::from_millis(10)).await;
+        sleep(Duration::from_millis(DRAW_DELAY)).await;
         println!("{}",offset_output(format!("{}{}{}",CORNER4,header3,CORNER3)));
-        sleep(Duration::from_secs(10)).await; // Wait 10 seconds before checking again
+        sleep(Duration::from_secs(UPDATE_PERIOD)).await; // Wait 10 seconds before checking again
     }
 }
