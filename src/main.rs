@@ -8,8 +8,6 @@ use std::{time::Duration, io::{self, BufRead, BufReader}};
 use futures_util::pin_mut;
 use futures_util::stream::StreamExt;
 
-use unaccent::unaccent;
-
 
 //account details  TODO turn into convars or external config
 static API_KEY: &str = "API_KEY_GOES_HERE";
@@ -126,7 +124,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match client.now_playing().await {
             
             Ok(Some(track)) => {
-                string = format!("> Now playing: {} - {}", unaccent(track.artist.name), unaccent(track.name));
+                string = format!("> Now playing: {} - {}", track.artist.name, track.name);
             }
             Ok(None) => {
                 string = "X No track currently playing.".to_string();
@@ -164,7 +162,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         while let Some(track) = recent_tracks.next().await{
             match track {
                 Ok(track) => {
-                    let string = format!("{} - {}",unaccent(track.artist.name),unaccent(track.name));
+                    let string = format!("{} - {}",track.artist.name,track.name);
                     println!("{}",offset_output(process_row(string)));
                     if index >HISTORY_LENGTH{break;}
                     index += 1;
