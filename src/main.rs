@@ -1,6 +1,6 @@
 use lastfm::Client;
 use tokio::time::sleep;
-
+use std::env;
 
 use std::fs::File;
 use std::{time::Duration, io::{self, BufRead, BufReader}};
@@ -10,11 +10,10 @@ use futures_util::stream::StreamExt;
 
 
 //account details  TODO turn into convars or external config
-static API_KEY: &str = "API_KEY_GOES_HERE";
-static USERNAME: &str = "LFM_USERNAME_GOES_HERE";
+
 
 //width height
-static HISTORY_LENGTH: i32 = 10; 
+static HISTORY_LENGTH: i32 = 10;
 static MAX_LENGTH: usize = 55;
 // height is calculated by hand for now
 // >> if not set correctly it might not redraw the entire block
@@ -65,7 +64,7 @@ fn read_title() -> io::Result<()> {
 fn process_row(mut string: String) -> String {
     if string.chars().count() > MAX_LENGTH {
         let (first, _last) = string.split_at_mut(MAX_LENGTH);
-        let string2: String=first.to_string(); 
+        let string2: String=first.to_string();
         return format!("{}{} {}",VERT_LINE1,string2,VERT_LINE1);
     }
     else {
@@ -74,7 +73,7 @@ fn process_row(mut string: String) -> String {
         }
         return format!("{}{} {}",VERT_LINE1,string,VERT_LINE1);
     }
-    
+
 }
 
 fn offset_output(string: String) -> String {
@@ -91,19 +90,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     print!("\x1B[2J\x1B[H");
     print!("\n");
 
+
+    let mut api_key = "";
+    let mut username = "";
+
+    match env::var("LASTRS_KEY") {
+        Ok(val) => {
+           api_key = val.clone().leak();
+        }
+        Err(_e) => println!("Couldn't read LASTRS_KEY"),
+    }
+    match env::var("LASTRS_USR") {
+        Ok(val) => {
+           username = val.clone().leak();
+        }
+        Err(_e) => println!("Couldn't read LASTRS_USR"),
+    }
+
+
+
+   
     read_title().ok();
 
     print!("\n");
     let client = Client::builder()
-        .api_key(&API_KEY)
-        .username(&USERNAME)
-        .build();
+    .api_key(&api_key)
+    .username(&username)
+    .build();
     let mut first: bool = true;
     loop {
         if !first
         {
             for _n in 0..ERASE_LENGTH {
-                sleep(Duration::from_millis(50)).await; 
+                sleep(Duration::from_millis(50)).await;
                 print!("\x1b[1A");
                 print!("\x1b[2K");
             }
@@ -119,10 +138,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}",offset_output(format!("{}{}{}",CORNER1,header1,CORNER2)));
 
         sleep(Duration::from_millis(DRAW_DELAY)).await;
-    
+
         let string: String;
         match client.now_playing().await {
-            
+
             Ok(Some(track)) => {
                 string = format!("> Now playing: {} - {}", track.artist.name, track.name);
             }
@@ -138,7 +157,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", offset_output(format!("{}{}{}",CORNER4,header1,CORNER3)));
         sleep(Duration::from_millis(DRAW_DELAY)).await;
 
-        
+
         println!("");
         sleep(Duration::from_millis(DRAW_DELAY)).await;
 
@@ -168,9 +187,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     index += 1;
                 }
 
-               Err(e) => {
+                Err(e) => {
                     println!("Error fetching data: {:?}", e);
-               }
+                }
             }
         }
 
