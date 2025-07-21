@@ -14,8 +14,10 @@
 
 ╔< USAGE >═══════════════════════════════════════════════╗
 ║ clone repo                                             ║
-║ fill in ur creds in src/main.rs                        ║
-║ change settings to ur liking                           ║
+║ set env vars as such:                                  ║
+║ LASTRS_KEY = lastfm api key                            ║
+║ LASTRS_USR = lastfm username                           ║
+║ change settings to ur liking in main.rs                ║
 ║ cargo run                                              ║
 ╚════════════════════════════════════════════════════════╝
 
